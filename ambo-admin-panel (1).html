@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMBO FRESH · Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#2E7D32;--green-light:#4CAF50;--green-dim:#1B5E20;
+  --green-bg:rgba(46,125,50,0.12);--green-mid:rgba(46,125,50,0.22);
+  --gold:#F9A825;--gold-light:#FDD835;--gold-bg:rgba(249,168,37,0.1);
+  --red:#E53935;--red-bg:rgba(229,57,53,0.1);
+  --blue:#1565C0;--blue-light:#42A5F5;
+  --bg:#070C07;--surface:#0F1510;--surface2:#151D15;--surface3:#1C261C;--surface4:#222E22;
+  --border:rgba(255,255,255,0.07);--border-green:rgba(46,125,50,0.3);
+  --text:#EDF5ED;--muted:#6B7B6B;--muted2:#4A574A;
+  --radius:14px;--sidebar-w:240px;
+}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+h1,h2,h3,h4,h5,h6{font-family:'Syne',sans-serif}
+
+/* LAYOUT */
+#shell{display:flex;height:100vh;overflow:hidden}
+#sidebar{width:var(--sidebar-w);flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;z-index:10}
+#main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+#topbar{height:60px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;flex-shrink:0;position:sticky;top:0;z-index:5}
+#content{flex:1;padding:28px;overflow-y:auto}
+
+/* SIDEBAR */
+.sb-logo{padding:20px 20px 16px;border-bottom:1px solid var(--border)}
+.sb-logo-title{font-size:17px;font-weight:800;letter-spacing:-.3px}
+.sb-logo-title .fresh{color:var(--green-light)}
+.sb-logo-sub{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:3px}
+.sb-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(229,57,53,.1);border:1px solid rgba(229,57,53,.25);border-radius:100px;padding:3px 10px;margin-top:8px;font-size:10px;color:#EF5350;font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.5px}
+.sb-nav{padding:12px 10px;flex:1}
+.sb-section-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);padding:8px 10px 6px;font-family:'Syne',sans-serif;font-weight:700}
+.sb-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:all .18s;border:none;background:none;color:var(--muted);width:100%;text-align:left;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500;margin-bottom:2px}
+.sb-item:hover{background:var(--surface2);color:var(--text)}
+.sb-item.active{background:var(--green-bg);color:var(--green-light);border:1px solid var(--border-green)}
+.sb-item-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.sb-item-badge{margin-left:auto;background:var(--red);color:#fff;font-family:'Syne',sans-serif;font-size:9px;font-weight:800;padding:2px 7px;border-radius:100px;min-width:18px;text-align:center}
+.sb-bottom{padding:12px 10px 16px;border-top:1px solid var(--border)}
+.sb-user-card{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px}
+.sb-avatar{width:34px;height:34px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:#fff;flex-shrink:0}
+.sb-user-name{font-family:'Syne',sans-serif;font-size:12px;font-weight:700}
+.sb-user-role{font-size:10px;color:var(--muted)}
+
+/* TOPBAR */
+.tb-page-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:800}
+.tb-actions{display:flex;align-items:center;gap:10px}
+.tb-pill{display:inline-flex;align-items:center;gap:6px;background:var(--green-bg);border:1px solid var(--border-green);border-radius:100px;padding:6px 14px;font-size:11px;color:var(--green-light);font-family:'Syne',sans-serif;font-weight:700}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.pulse-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green-light);animation:pulse 1.5s ease-in-out infinite}
+
+/* PANELS */
+.panel{display:none}
+.panel.active{display:block}
+
+/* STATS GRID */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:-30px;right:-30px;width:100px;height:100px;border-radius:50%;opacity:.08;pointer-events:none}
+.stat-card.green::before{background:var(--green-light)}
+.stat-card.gold::before{background:var(--gold)}
+.stat-card.red::before{background:var(--red)}
+.stat-card.blue::before{background:var(--blue-light)}
+.stat-label{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Syne',sans-serif;font-weight:700;margin-bottom:10px}
+.stat-val{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;line-height:1;margin-bottom:6px}
+.stat-val.green{color:var(--green-light)}
+.stat-val.gold{color:var(--gold-light)}
+.stat-val.red{color:#EF5350}
+.stat-val.blue{color:var(--blue-light)}
+.stat-sub{font-size:12px;color:var(--muted)}
+
+/* SECTION HEADER */
+.section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-hd h3{font-size:15px;font-weight:700;color:var(--text)}
+
+/* BUTTONS */
+.btn{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;padding:10px 18px;border-radius:10px;cursor:pointer;border:none;transition:all .18s;display:inline-flex;align-items:center;gap:7px;letter-spacing:.2px}
+.btn-green{background:var(--green);color:#fff}
+.btn-green:hover{background:var(--green-light)}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}
+.btn-outline:hover{background:var(--surface2);border-color:var(--border-green)}
+.btn-red{background:var(--red-bg);color:#EF5350;border:1px solid rgba(229,57,53,.25)}
+.btn-red:hover{background:rgba(229,57,53,.2)}
+.btn-gold{background:rgba(249,168,37,.12);color:var(--gold);border:1px solid rgba(249,168,37,.3)}
+.btn-gold:hover{background:rgba(249,168,37,.2)}
+.btn-sm{padding:7px 13px;font-size:12px}
+.btn-xs{padding:5px 10px;font-size:11px;border-radius:8px}
+
+/* TABLE */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--surface2);padding:12px 16px;text-align:left;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surface2)}
+tbody td{padding:13px 16px;font-size:13px;vertical-align:middle}
+.td-mono{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--green-light)}
+.td-muted{color:var(--muted);font-size:12px}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;padding:3px 9px;border-radius:100px;letter-spacing:.3px}
+.badge-green{background:var(--green-bg);color:var(--green-light);border:1px solid var(--border-green)}
+.badge-gold{background:var(--gold-bg);color:var(--gold);border:1px solid rgba(249,168,37,.3)}
+.badge-red{background:var(--red-bg);color:#EF5350;border:1px solid rgba(229,57,53,.3)}
+.badge-blue{background:rgba(21,101,192,.1);color:var(--blue-light);border:1px solid rgba(21,101,192,.3)}
+.badge-muted{background:var(--surface3);color:var(--muted);border:1px solid var(--border)}
+
+/* FORM */
+.form-grid{display:grid;gap:16px}
+.form-grid-2{grid-template-columns:1fr 1fr}
+.form-grid-3{grid-template-columns:1fr 1fr 1fr}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-label{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--muted)}
+.form-input,.form-select,.form-textarea{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:11px 14px;border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;width:100%}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--muted2)}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:rgba(46,125,50,.5);background:var(--surface3)}
+.form-select{appearance:none;cursor:pointer}
+.form-textarea{resize:vertical;min-height:90px;line-height:1.6}
+.form-hint{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:20px}
+.card-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;color:var(--text)}
+.card-title .icon{font-size:16px}
+
+/* MODAL */
+#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+#modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border-green);border-radius:20px;padding:28px;width:100%;max-width:520px;max-height:85vh;overflow-y:auto;position:relative}
+.modal-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between}
+.modal-close{width:32px;height:32px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;color:var(--muted)}
+.modal-close:hover{color:var(--text);border-color:var(--border-green)}
+.modal-actions{display:flex;gap:10px;margin-top:22px;justify-content:flex-end}
+
+/* ITEM LIST */
+.item-list{display:flex;flex-direction:column;gap:2px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.item-row{display:flex;align-items:center;gap:14px;background:var(--surface);padding:13px 16px;transition:background .15s}
+.item-row:hover{background:var(--surface2)}
+.item-row:not(:last-child){border-bottom:1px solid var(--border)}
+.item-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.item-body{flex:1;min-width:0}
+.item-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item-meta{font-size:11px;color:var(--muted)}
+.item-actions{display:flex;gap:6px;flex-shrink:0}
+
+/* SUBJECT SELECT */
+.subject-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.subj-pill{background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:6px 14px;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .18s}
+.subj-pill.active{background:var(--green-bg);border-color:var(--border-green);color:var(--green-light)}
+.subj-pill:hover:not(.active){background:var(--surface3);color:var(--text)}
+
+/* TABS */
+.tabs-bar{display:flex;gap:2px;background:var(--surface2);border-radius:12px;padding:3px;margin-bottom:22px;width:fit-content}
+.tab-btn{padding:8px 18px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;border:none;background:transparent;color:var(--muted);border-radius:10px;cursor:pointer;transition:all .18s}
+.tab-btn.active{background:var(--surface3);color:var(--text)}
+
+/* ALERT */
+.alert{border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:13px;display:flex;align-items:flex-start;gap:10px;border:1px solid}
+.alert-info{background:rgba(21,101,192,.08);border-color:rgba(21,101,192,.25);color:#90CAF9}
+.alert-success{background:var(--green-bg);border-color:var(--border-green);color:var(--green-light)}
+.alert-warn{background:var(--gold-bg);border-color:rgba(249,168,37,.3);color:var(--gold)}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-state .icon{font-size:36px;margin-bottom:10px}
+.empty-state p{font-size:13px}
+
+/* LINK INPUT */
+.link-row{display:flex;gap:8px;align-items:flex-start}
+.link-row .form-input{flex:1}
+
+/* TOGGLE */
+.toggle-wrap{display:flex;align-items:center;gap:10px}
+.toggle{position:relative;width:44px;height:24px;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;inset:0;background:var(--surface3);border:1px solid var(--border);border-radius:100px;transition:.25s}
+.toggle-slider::before{content:'';position:absolute;width:18px;height:18px;left:2px;top:2px;background:var(--muted2);border-radius:50%;transition:.25s}
+.toggle input:checked + .toggle-slider{background:var(--green-bg);border-color:var(--border-green)}
+.toggle input:checked + .toggle-slider::before{background:var(--green-light);transform:translateX(20px)}
+.toggle-label{font-size:13px;color:var(--text)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:10px}
+::-webkit-scrollbar-thumb:hover{background:var(--surface4)}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  :root{--sidebar-w:200px}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .form-grid-3{grid-template-columns:1fr 1fr}
+}
+
+/* CONFIRM DIALOG */
+.confirm-box{background:var(--surface);border:1px solid rgba(229,57,53,.3);border-radius:20px;padding:28px;width:100%;max-width:380px;text-align:center}
+.confirm-box h3{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;margin-bottom:10px;color:#EF5350}
+.confirm-box p{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:22px}
+.confirm-box .actions{display:flex;gap:10px;justify-content:center}
+
+/* FADE IN */
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.panel.active{animation:fadeIn .22s ease}
+
+/* NEWS TAG */
+.tag-urgent{background:rgba(229,57,53,.1);color:#EF5350;border-color:rgba(229,57,53,.3)}
+.tag-academic{background:rgba(21,101,192,.1);color:var(--blue-light);border-color:rgba(21,101,192,.3)}
+.tag-event{background:rgba(249,168,37,.1);color:var(--gold);border-color:rgba(249,168,37,.3)}
+.tag-general{background:var(--green-bg);color:var(--green-light);border-color:var(--border-green)}
+
+/* PREVIEW BADGE */
+.preview-url{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green-light);background:var(--green-bg);border:1px solid var(--border-green);border-radius:8px;padding:5px 10px;word-break:break-all;margin-top:6px}
+</style>
+</head>
+<body>
+
+<div id="shell">
+
+<!-- ======== SIDEBAR ======== -->
+<div id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-title">AMBO <span class="fresh">FRESH</span></div>
+    <div class="sb-logo-sub">Admin Console</div>
+    <div class="sb-badge">🔐 Admin Only</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section-label">Overview</div>
+    <button class="sb-item active" onclick="showPanel('dashboard')" id="nav-dashboard"><span class="sb-item-icon">📊</span>Dashboard</button>
+
+    <div class="sb-section-label">Users & Payments</div>
+    <button class="sb-item" onclick="showPanel('users')" id="nav-users"><span class="sb-item-icon">👥</span>Users<span class="sb-item-badge" id="pendingBadge" style="display:none">0</span></button>
+    <button class="sb-item" onclick="showPanel('transactions')" id="nav-transactions"><span class="sb-item-icon">💳</span>Transactions</button>
+
+    <div class="sb-section-label">Content</div>
+    <button class="sb-item" onclick="showPanel('subjects')" id="nav-subjects"><span class="sb-item-icon">📚</span>Subjects</button>
+    <button class="sb-item" onclick="showPanel('chapters')" id="nav-chapters"><span class="sb-item-icon">📋</span>Chapters</button>
+    <button class="sb-item" onclick="showPanel('materials')" id="nav-materials"><span class="sb-item-icon">📄</span>Materials & Links</button>
+    <button class="sb-item" onclick="showPanel('news')" id="nav-news"><span class="sb-item-icon">📰</span>News & Announcements</button>
+
+    <div class="sb-section-label">Configuration</div>
+    <button class="sb-item" onclick="showPanel('settings')" id="nav-settings"><span class="sb-item-icon">⚙️</span>Site Settings</button>
+    <button class="sb-item" onclick="showPanel('telegram')" id="nav-telegram"><span class="sb-item-icon">✈️</span>Telegram Links</button>
+  </nav>
+  <div class="sb-bottom">
+    <div class="sb-user-card">
+      <div class="sb-avatar">A</div>
+      <div>
+        <div class="sb-user-name">Administrator</div>
+        <div class="sb-user-role">Full Access</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== MAIN ======== -->
+<div id="main">
+
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div class="tb-page-title" id="topbarTitle">Dashboard</div>
+    <div class="tb-actions">
+      <div class="tb-pill"><span class="pulse-dot"></span>Live Sync Active</div>
+      <button class="btn btn-outline btn-sm" onclick="refreshAll()">↻ Refresh</button>
+    </div>
+  </div>
+
+  <!-- CONTENT AREA -->
+  <div id="content">
+
+    <!-- ======================================================= -->
+    <!-- DASHBOARD -->
+    <!-- ======================================================= -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card green">
+          <div class="stat-label">Total Users</div>
+          <div class="stat-val green" id="stat-users">0</div>
+          <div class="stat-sub">Registered accounts</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="stat-label">Premium Users</div>
+          <div class="stat-val gold" id="stat-premium">0</div>
+          <div class="stat-sub">Active subscriptions</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-label">Pending Approvals</div>
+          <div class="stat-val red" id="stat-pending">0</div>
+          <div class="stat-sub">Awaiting verification</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">Total Materials</div>
+          <div class="stat-val blue" id="stat-materials">0</div>
+          <div class="stat-sub">Files & links uploaded</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:20px">
+        <!-- Recent Users -->
+        <div>
+          <div class="section-hd"><h3>🕐 Recent Registrations</h3><button class="btn btn-outline btn-xs" onclick="showPanel('users')">View All →</button></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Name</th><th>Phone</th><th>Stream</th><th>Status</th></tr></thead>
+              <tbody id="recentUsersTable"><tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No users yet</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <!-- Quick Actions -->
+        <div>
+          <div class="section-hd"><h3>⚡ Quick Actions</h3></div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <button class="btn btn-green" style="width:100%;justify-content:flex-start" onclick="showPanel('materials');openAddMaterialModal()">➕ Add Material / Link</button>
+            <button class="btn btn-gold" style="width:100%;justify-content:flex-start" onclick="showPanel('news');openAddNewsModal()">📢 Post Announcement</button>
+            <button class="btn btn-outline" style="width:100%;justify-content:flex-start" onclick="showPanel('users')">✅ Approve Payments</button>
+            <button class="btn btn-outline" style="width:100%;justify-content:flex-start" onclick="showPanel('settings')">⚙️ Update Pricing</button>
+            <button class="btn btn-outline" style="width:100%;justify-content:flex-start" onclick="showPanel('telegram')">✈️ Update Telegram Links</button>
+          </div>
+          <div style="margin-top:20px">
+            <div class="section-hd"><h3>📊 Content Stats</h3></div>
+            <div class="card" style="padding:16px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:13px"><span style="color:var(--muted)">Subjects</span><span style="font-weight:700" id="cs-subjects">0</span></div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:13px"><span style="color:var(--muted)">Chapters</span><span style="font-weight:700" id="cs-chapters">0</span></div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:13px"><span style="color:var(--muted)">Materials</span><span style="font-weight:700" id="cs-mats">0</span></div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:13px"><span style="color:var(--muted)">Videos</span><span style="font-weight:700" id="cs-vids">0</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--muted)">News Posts</span><span style="font-weight:700" id="cs-news">0</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- USERS -->
+    <!-- ======================================================= -->
+    <div class="panel" id="panel-users">
+      <div class="alert alert-warn" id="pendingAlert" style="display:none"><span>⚠️</span><span id="pendingAlertText">0 users are pending premium approval.</span></div>
+      <div class="section-hd">
+        <h3>All Users</h3>
+        <div style="display:flex;gap:8px">
+          <input class="form-input" style="width:220px;padding:8px 12px;font-size:13px" placeholder="🔍 Search by name or phone…" oninput="filterUsers(this.value)" id="userSearchInput">
+          <button class="btn btn-red btn-sm" onclick="confirmClearUsers()">🗑 Clear All</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Phone</th><th>Stream</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="usersTable"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No users</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- TRANSACTIONS -->
+    <!-- ======================================================= -->
+    <div class="panel" id="panel-transactions">
+      <div class="section-hd"><h3>Payment Transactions</h3><button class="btn btn-red btn-sm" onclick="confirmClearTxns()">🗑 Clear All</button></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Phone</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead>
+          <tbody id="txnsTable"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No transactions</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SUBJECTS -->
+    <!-- ======================================================= -->
+    <div class="panel" id="panel-subjects">
+      <div class="section-hd"><h3>Subjects / Courses</h3><button class="btn btn-green btn-sm" onclick="openAddSubjectModal()">➕ Add Subject</button></div>
+      <div class="alert alert-info"><span>ℹ️</span><span>Subjects appear in the Courses screen. Each subject can have chapters, materials, videos, and past papers.</span></div>
+      <div id="subjectsList"></div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- CHAPTERS -->
+    <!-- ======================================================= -->
+    <div class="panel" id="panel-chapters">
+      <div class="section-hd"><h3>Chapters</h3><button class="btn btn-green btn-sm" onclick="openAddChapterModal()">➕ Add Chapter</button></div>
+      <div class="alert alert-info"><span>ℹ️</span><span>Select a subject to manage its chapters. Chapters are shown inside the course detail screen.</span></div>
+      <div class="subject-tabs" id="chapterSubjectTabs"></div>
+      <div id="chaptersList"></div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- MATERIALS -->
+    <!-- ======================================================= -->
+    <div class="panel" id="panel-materials">
+      <div class="section-hd"><h3>Materials & Links</h3><button class="btn btn-green btn-sm" onclick="openAddMaterialModal()">➕ Add Material</button></div>
+      <div class="alert alert-info"><span>ℹ️</span><span>Add PDF links, video URLs, notes, or past exam papers. Links open directly in the student app.</span></div>
+      <div class="tabs-bar">
+        <button class="tab-btn active" onclick="filterMaterials('all',this)">All</button>
+        <button class="tab-btn" onclick="filterMaterials('pdf',this)">📄 PDFs</button>
+        <button class="tab-btn" onclick="filterMaterials('video',this)">🎬 Videos</button>
+        <button class="tab-btn" onclick="filterMaterials('note',this)">📝 Notes</button>
+        <button class="tab-btn" onclick="filterMaterials('exam',this)">🧪 Exams</button>
+      </div>
+      <div id="materialsList"></div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- NEWS -->
+    <!-- ======================================================= -->
+    <div class="panel" id="panel-news">
+      <div class="section-hd"><h3>News & Announcements</h3><button class="btn btn-green btn-sm" onclick="openAddNewsModal()">➕ Post News</button></div>
+      <div id="newsList"></div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SETTINGS -->
+    <!-- ======================================================= -->
+    <div class="panel" id="panel-settings">
+      <div class="card">
+        <div class="card-title"><span class="icon">🏫</span>Campus Info</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Campus Name</label>
+            <input class="form-input" id="set-campusName" placeholder="e.g. Hachalu Hundessa Campus">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Motivation / Tagline (shown on login screen)</label>
+            <input class="form-input" id="set-motivation" placeholder="e.g. Your gateway to academic excellence">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Campus Banner / Announcement (shown on home screen)</label>
+            <textarea class="form-textarea" id="set-campusBanner" placeholder="e.g. Final exams start July 15th. Good luck to all students!"></textarea>
+            <div class="form-hint">Leave blank to hide the banner on home screen.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">💳</span>Payment Settings</div>
+        <div class="form-grid form-grid-3">
+          <div class="form-group">
+            <label class="form-label">Premium Price (ETB)</label>
+            <input class="form-input" id="set-price" type="number" placeholder="e.g. 89">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Discount Label (optional)</label>
+            <input class="form-input" id="set-discountLabel" placeholder="e.g. 50% OFF — Launch Week">
+          </div>
+          <div class="form-group">
+            <label class="form-label">CBE Account Number</label>
+            <input class="form-input" id="set-cbeAccount" placeholder="e.g. 1000406065719" style="font-family:'JetBrains Mono',monospace">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Account Holder Name</label>
+            <input class="form-input" id="set-cbeHolder" placeholder="e.g. Giduma Hinsermu">
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;justify-content:flex-end">
+        <button class="btn btn-outline" onclick="loadSettings()">↺ Reset</button>
+        <button class="btn btn-green" onclick="saveSettings()">💾 Save Settings</button>
+      </div>
+      <div id="settings-success" style="display:none" class="alert alert-success" style="margin-top:12px"><span>✅</span><span>Settings saved and pushed live!</span></div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- TELEGRAM -->
+    <!-- ======================================================= -->
+    <div class="panel" id="panel-telegram">
+      <div class="card">
+        <div class="card-title"><span class="icon">✈️</span>Telegram Support</div>
+        <div class="form-grid form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Support Channel Display Name</label>
+            <input class="form-input" id="tg-supportName" placeholder="e.g. Contact Support on Telegram">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Support Telegram Link</label>
+            <input class="form-input" id="tg-supportLink" placeholder="https://t.me/yourusername">
+          </div>
+        </div>
+        <div id="tg-support-preview" class="preview-url" style="display:none"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">📢</span>Campus News Channel</div>
+        <div class="form-grid form-grid-2">
+          <div class="form-group">
+            <label class="form-label">News Channel Display Name</label>
+            <input class="form-input" id="tg-newsName" placeholder="e.g. Campus News Channel">
+          </div>
+          <div class="form-group">
+            <label class="form-label">News Channel Telegram Link</label>
+            <input class="form-input" id="tg-newsLink" placeholder="https://t.me/yourchannel">
+          </div>
+        </div>
+        <div id="tg-news-preview" class="preview-url" style="display:none"></div>
+      </div>
+
+      <div class="alert alert-info"><span>ℹ️</span><span>These links appear in the student app's Profile screen and on the Premium payment page. They open in the user's browser/Telegram app.</span></div>
+
+      <div style="display:flex;gap:12px;justify-content:flex-end">
+        <button class="btn btn-outline" onclick="loadTelegram()">↺ Reset</button>
+        <button class="btn btn-green" onclick="saveTelegram()">💾 Save Telegram Links</button>
+      </div>
+      <div id="tg-success" style="display:none;margin-top:12px" class="alert alert-success"><span>✅</span><span>Telegram links updated!</span></div>
+    </div>
+
+  </div><!-- #content -->
+</div><!-- #main -->
+</div><!-- #shell -->
+
+<!-- ======================================================= -->
+<!-- MODAL -->
+<!-- ======================================================= -->
+<div id="modal-overlay">
+  <div class="modal" id="modal-box">
+    <div class="modal-title">
+      <span id="modal-title-text">Modal</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modal-body"></div>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<!-- CONFIRM DIALOG (reuses modal overlay) -->
+<div id="confirm-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1100;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+  <div class="confirm-box">
+    <h3 id="confirm-title">Are you sure?</h3>
+    <p id="confirm-msg">This action cannot be undone.</p>
+    <div class="actions">
+      <button class="btn btn-outline" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-red" id="confirm-ok-btn" onclick="">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// LOCALSTORAGE KEYS (must match user site exactly)
+// ============================================================
+const LS_USERS     = 'amboUsers';
+const LS_SETTINGS  = 'amboSettings';
+const LS_SUBJECTS  = 'amboSubjects';
+const LS_CHAPTERS  = 'amboChapters';
+const LS_MATERIALS = 'amboMaterials';
+const LS_VIDEOS    = 'amboVideos';
+const LS_EXAMS     = 'amboExams';
+const LS_NEWS      = 'amboNews';
+const LS_TELEGRAM  = 'amboTelegram';
+const LS_TXNS      = 'adminTransactions';
+
+function ls(key,def=[]){try{return JSON.parse(localStorage.getItem(key))||def}catch{return def}}
+function save(key,val){localStorage.setItem(key,JSON.stringify(val))}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+const PANEL_TITLES = {
+  dashboard:'Dashboard',users:'Users',transactions:'Transactions',
+  subjects:'Subjects',chapters:'Chapters',materials:'Materials & Links',
+  news:'News & Announcements',settings:'Site Settings',telegram:'Telegram Links'
+};
+function showPanel(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  document.getElementById('nav-'+id).classList.add('active');
+  document.getElementById('topbarTitle').textContent=PANEL_TITLES[id]||id;
+  renderPanel(id);
+}
+function renderPanel(id){
+  if(id==='dashboard')renderDashboard();
+  else if(id==='users')renderUsers();
+  else if(id==='transactions')renderTransactions();
+  else if(id==='subjects')renderSubjects();
+  else if(id==='chapters')renderChapterPanel();
+  else if(id==='materials')renderMaterials('all');
+  else if(id==='news')renderNews();
+  else if(id==='settings')loadSettings();
+  else if(id==='telegram')loadTelegram();
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard(){
+  const users=ls(LS_USERS);
+  const premium=users.filter(u=>u.premium).length;
+  const pending=users.filter(u=>u.pending&&!u.premium).length;
+  const mats=ls(LS_MATERIALS).length+ls(LS_VIDEOS).length+ls(LS_EXAMS).length;
+  document.getElementById('stat-users').textContent=users.length;
+  document.getElementById('stat-premium').textContent=premium;
+  document.getElementById('stat-pending').textContent=pending;
+  document.getElementById('stat-materials').textContent=mats;
+  // Content stats
+  document.getElementById('cs-subjects').textContent=ls(LS_SUBJECTS).length||8;
+  document.getElementById('cs-chapters').textContent=ls(LS_CHAPTERS).length;
+  document.getElementById('cs-mats').textContent=ls(LS_MATERIALS).length;
+  document.getElementById('cs-vids').textContent=ls(LS_VIDEOS).length;
+  document.getElementById('cs-news').textContent=ls(LS_NEWS).length;
+  // Recent users
+  const recent=users.slice(-5).reverse();
+  const tbody=document.getElementById('recentUsersTable');
+  if(recent.length===0){tbody.innerHTML='<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No users yet</td></tr>';return}
+  tbody.innerHTML=recent.map(u=>`
+    <tr>
+      <td><b style="font-size:13px">${u.name}</b></td>
+      <td class="td-mono">${u.phone}</td>
+      <td class="td-muted">${u.stream==='pre-eng'?'Pre-Eng':'Nat. Sci.'}</td>
+      <td>${statusBadge(u)}</td>
+    </tr>`).join('');
+  // Pending badge
+  const pendingBadge=document.getElementById('pendingBadge');
+  if(pending>0){pendingBadge.style.display='';pendingBadge.textContent=pending}
+  else pendingBadge.style.display='none';
+}
+
+function statusBadge(u){
+  if(u.premium)return'<span class="badge badge-gold">👑 Premium</span>';
+  if(u.pending)return'<span class="badge badge-blue">⏳ Pending</span>';
+  return'<span class="badge badge-muted">Free</span>';
+}
+
+// ============================================================
+// USERS
+// ============================================================
+let _allUsers=[];
+function renderUsers(filter=''){
+  _allUsers=ls(LS_USERS);
+  const pending=_allUsers.filter(u=>u.pending&&!u.premium).length;
+  const pendingAlert=document.getElementById('pendingAlert');
+  if(pending>0){
+    pendingAlert.style.display='flex';
+    document.getElementById('pendingAlertText').textContent=`${pending} user${pending>1?'s':''} are pending premium approval. Click Approve below.`;
+  }else pendingAlert.style.display='none';
+
+  const q=filter.toLowerCase();
+  const filtered=q?_allUsers.filter(u=>u.name.toLowerCase().includes(q)||u.phone.includes(q)):_allUsers;
+  const tbody=document.getElementById('usersTable');
+  if(filtered.length===0){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted);font-size:13px">No users found</td></tr>';return}
+  tbody.innerHTML=filtered.map((u,realIdx)=>{
+    const idx=_allUsers.indexOf(u);
+    return`<tr>
+      <td><b>${u.name}</b></td>
+      <td class="td-mono">${u.phone}</td>
+      <td class="td-muted">${u.stream==='pre-eng'?'Pre-Engineering':'Natural Science'}</td>
+      <td class="td-muted">${u.joinDate?new Date(u.joinDate).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'-'}</td>
+      <td>${statusBadge(u)}</td>
+      <td>
+        <div style="display:flex;gap:6px">
+          ${!u.premium&&u.pending?`<button class="btn btn-gold btn-xs" onclick="approveUser(${idx})">✅ Approve</button>`:''}
+          ${u.premium?`<button class="btn btn-outline btn-xs" onclick="revokeUser(${idx})">🔒 Revoke</button>`:''}
+          ${!u.premium&&!u.pending?`<button class="btn btn-green btn-xs" onclick="grantUser(${idx})">👑 Grant</button>`:''}
+          <button class="btn btn-red btn-xs" onclick="confirmDeleteUser(${idx})">✕</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  // Update sidebar badge
+  const pb=document.getElementById('pendingBadge');
+  if(pending>0){pb.style.display='';pb.textContent=pending}else pb.style.display='none';
+}
+function filterUsers(v){renderUsers(v)}
+
+function approveUser(idx){
+  const users=ls(LS_USERS);
+  if(!users[idx])return;
+  users[idx].premium=true;users[idx].pending=false;
+  save(LS_USERS,users);renderUsers();renderDashboard();showToast('✅ Premium access granted to '+users[idx].name);
+}
+function revokeUser(idx){
+  const users=ls(LS_USERS);
+  if(!users[idx])return;
+  users[idx].premium=false;users[idx].pending=false;
+  save(LS_USERS,users);renderUsers();renderDashboard();showToast('🔒 Premium revoked');
+}
+function grantUser(idx){
+  const users=ls(LS_USERS);
+  if(!users[idx])return;
+  users[idx].premium=true;users[idx].pending=false;
+  save(LS_USERS,users);renderUsers();renderDashboard();showToast('👑 Premium granted to '+users[idx].name);
+}
+function confirmDeleteUser(idx){
+  showConfirm('Delete User?','This will permanently remove the user account.',()=>{
+    const users=ls(LS_USERS);users.splice(idx,1);save(LS_USERS,users);renderUsers();renderDashboard();
+  });
+}
+function confirmClearUsers(){
+  showConfirm('Clear ALL Users?','This will delete every registered user account. This cannot be undone.',()=>{
+    save(LS_USERS,[]);renderUsers();renderDashboard();showToast('🗑 All users cleared');
+  });
+}
+
+// ============================================================
+// TRANSACTIONS
+// ============================================================
+function renderTransactions(){
+  const txns=ls(LS_TXNS);
+  const tbody=document.getElementById('txnsTable');
+  if(txns.length===0){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted);font-size:13px">No transactions yet</td></tr>';return}
+  tbody.innerHTML=[...txns].reverse().map(t=>`
+    <tr>
+      <td><b>${t.name||'—'}</b></td>
+      <td class="td-mono">${t.phone||'—'}</td>
+      <td style="color:var(--gold-light);font-family:'JetBrains Mono',monospace;font-weight:700">${t.amount||'?'} ETB</td>
+      <td class="td-muted">${t.date?new Date(t.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'-'}</td>
+      <td>${t.status==='approved'?'<span class="badge badge-green">✅ Approved</span>':t.status==='rejected'?'<span class="badge badge-red">✕ Rejected</span>':'<span class="badge badge-blue">⏳ Pending</span>'}</td>
+    </tr>`).join('');
+}
+function confirmClearTxns(){
+  showConfirm('Clear All Transactions?','This will delete all payment transaction records.',()=>{
+    save(LS_TXNS,[]);renderTransactions();showToast('🗑 Transactions cleared');
+  });
+}
+
+// ============================================================
+// SUBJECTS
+// ============================================================
+const DEFAULT_SUBJECTS=[
+  {id:'cpp',name:'C++ Programming',icon:'💻',color:'rgba(123,31,162,.08)',border:'rgba(123,31,162,.3)'},
+  {id:'math',name:'Applied Mathematics',icon:'📐',color:'rgba(0,188,212,.08)',border:'rgba(0,188,212,.3)'},
+  {id:'physics',name:'Physics',icon:'⚛️',color:'rgba(21,101,192,.08)',border:'rgba(21,101,192,.3)'},
+  {id:'english',name:'English',icon:'📝',color:'rgba(255,87,34,.08)',border:'rgba(255,87,34,.3)'},
+  {id:'emerging',name:'Emerging Technologies',icon:'🤖',color:'rgba(0,188,212,.08)',border:'rgba(0,188,212,.3)'},
+  {id:'civics',name:'Civics & Ethics',icon:'⚖️',color:'rgba(46,125,50,.08)',border:'rgba(46,125,50,.3)'},
+  {id:'anthro',name:'Anthropology',icon:'🌍',color:'rgba(255,87,34,.08)',border:'rgba(255,87,34,.3)'},
+  {id:'entre',name:'Entrepreneurship',icon:'💼',color:'rgba(76,175,80,.08)',border:'rgba(76,175,80,.3)'},
+];
+function getSubjects(){const s=ls(LS_SUBJECTS);return s.length>0?s:DEFAULT_SUBJECTS}
+
+function renderSubjects(){
+  const subs=getSubjects();
+  const el=document.getElementById('subjectsList');
+  if(subs.length===0){el.innerHTML='<div class="empty-state"><div class="icon">📚</div><p>No subjects added yet.</p></div>';return}
+  el.innerHTML='<div class="item-list">'+subs.map((s,i)=>`
+    <div class="item-row">
+      <div class="item-icon" style="background:${s.color};border:1px solid ${s.border}">${s.icon}</div>
+      <div class="item-body">
+        <div class="item-title">${s.name}</div>
+        <div class="item-meta">ID: <span style="font-family:'JetBrains Mono',monospace;color:var(--green-light)">${s.id}</span> · ${ls(LS_CHAPTERS).filter(c=>c.subjectId===s.id).length} chapters</div>
+      </div>
+      <div class="item-actions">
+        <button class="btn btn-outline btn-xs" onclick="openEditSubjectModal(${i})">✏️ Edit</button>
+        <button class="btn btn-red btn-xs" onclick="confirmDeleteSubject(${i})">✕</button>
+      </div>
+    </div>`).join('')+'</div>';
+}
+
+function openAddSubjectModal(){
+  openModal('➕ Add Subject',`
+    <div class="form-grid">
+      <div class="form-grid form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Subject ID (unique key)</label>
+          <input class="form-input" id="subj-id" placeholder="e.g. cpp, math, biology">
+          <div class="form-hint">Lowercase, no spaces.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Emoji Icon</label>
+          <input class="form-input" id="subj-icon" placeholder="💻" style="font-size:20px">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Subject Name</label>
+        <input class="form-input" id="subj-name" placeholder="e.g. C++ Programming">
+      </div>
+      <div class="form-grid form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Background Color</label>
+          <input class="form-input" id="subj-color" placeholder="rgba(123,31,162,.08)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Border Color</label>
+          <input class="form-input" id="subj-border" placeholder="rgba(123,31,162,.3)">
+        </div>
+      </div>
+    </div>`,
+    [{label:'Cancel',cls:'btn-outline',action:'closeModal()'},
+     {label:'Add Subject',cls:'btn-green',action:'saveNewSubject()'}]
+  );
+}
+function saveNewSubject(){
+  const id=document.getElementById('subj-id').value.trim().replace(/\s+/g,'_');
+  const name=document.getElementById('subj-name').value.trim();
+  const icon=document.getElementById('subj-icon').value.trim()||'📚';
+  const color=document.getElementById('subj-color').value.trim()||'rgba(46,125,50,.08)';
+  const border=document.getElementById('subj-border').value.trim()||'rgba(46,125,50,.3)';
+  if(!id||!name){showToast('⚠️ ID and Name are required');return}
+  let subs=getSubjects();
+  if(subs.find(s=>s.id===id)){showToast('⚠️ Subject ID already exists');return}
+  subs.push({id,name,icon,color,border});
+  save(LS_SUBJECTS,subs);closeModal();renderSubjects();showToast('✅ Subject added!');
+}
+function openEditSubjectModal(i){
+  const subs=getSubjects();const s=subs[i];
+  openModal('✏️ Edit Subject',`
+    <div class="form-grid">
+      <div class="form-grid form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Subject ID</label>
+          <input class="form-input" id="subj-id" value="${s.id}" readonly style="opacity:.6">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Emoji Icon</label>
+          <input class="form-input" id="subj-icon" value="${s.icon}" style="font-size:20px">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Subject Name</label>
+        <input class="form-input" id="subj-name" value="${s.name}">
+      </div>
+      <div class="form-grid form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Background Color</label>
+          <input class="form-input" id="subj-color" value="${s.color}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Border Color</label>
+          <input class="form-input" id="subj-border" value="${s.border}">
+        </div>
+      </div>
+    </div>`,
+    [{label:'Cancel',cls:'btn-outline',action:'closeModal()'},
+     {label:'Save Changes',cls:'btn-green',action:`saveEditSubject(${i})`}]
+  );
+}
+function saveEditSubject(i){
+  let subs=getSubjects();
+  subs[i].name=document.getElementById('subj-name').value.trim()||subs[i].name;
+  subs[i].icon=document.getElementById('subj-icon').value.trim()||subs[i].icon;
+  subs[i].color=document.getElementById('subj-color').value.trim()||subs[i].color;
+  subs[i].border=document.getElementById('subj-border').value.trim()||subs[i].border;
+  save(LS_SUBJECTS,subs);closeModal();renderSubjects();showToast('✅ Subject updated!');
+}
+function confirmDeleteSubject(i){
+  const subs=getSubjects();
+  showConfirm('Delete Subject?',`Delete "${subs[i].name}"? All related chapters and materials will still exist but won't be linked.`,()=>{
+    let s=getSubjects();s.splice(i,1);save(LS_SUBJECTS,s);renderSubjects();showToast('🗑 Subject deleted');
+  });
+}
+
+// ============================================================
+// CHAPTERS
+// ============================================================
+let activeChapterSubject=null;
+function renderChapterPanel(){
+  const subs=getSubjects();
+  const tabsEl=document.getElementById('chapterSubjectTabs');
+  tabsEl.innerHTML=subs.map(s=>`<div class="subj-pill${s.id===activeChapterSubject?' active':''}" onclick="selectChapterSubject('${s.id}')">${s.icon} ${s.name}</div>`).join('');
+  if(!activeChapterSubject&&subs.length>0)activeChapterSubject=subs[0].id;
+  renderChapterList();
+}
+function selectChapterSubject(id){
+  activeChapterSubject=id;renderChapterPanel();
+}
+function renderChapterList(){
+  const el=document.getElementById('chaptersList');
+  if(!activeChapterSubject){el.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>Select a subject above.</p></div>';return}
+  const chapters=ls(LS_CHAPTERS).filter(c=>c.subjectId===activeChapterSubject);
+  if(chapters.length===0){el.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>No chapters added for this subject yet.</p></div>';return}
+  const allChapters=ls(LS_CHAPTERS);
+  el.innerHTML='<div class="item-list">'+chapters.map(c=>{
+    const realIdx=allChapters.indexOf(c);
+    return`<div class="item-row">
+      <div class="item-icon" style="background:var(--green-bg);border:1px solid var(--border-green);font-family:'Syne',sans-serif;font-weight:800;font-size:12px;color:var(--green-light)">${c.order||'#'}</div>
+      <div class="item-body">
+        <div class="item-title">${c.title||c.name}</div>
+        <div class="item-meta">${c.subjectId}</div>
+      </div>
+      <div class="item-actions">
+        <button class="btn btn-outline btn-xs" onclick="openEditChapterModal(${realIdx})">✏️</button>
+        <button class="btn btn-red btn-xs" onclick="confirmDeleteChapter(${realIdx})">✕</button>
+      </div>
+    </div>`;
+  }).join('')+'</div>';
+}
+function openAddChapterModal(){
+  const subs=getSubjects();
+  openModal('➕ Add Chapter',`
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Subject</label>
+        <select class="form-select" id="ch-subject">
+          ${subs.map(s=>`<option value="${s.id}"${s.id===activeChapterSubject?' selected':''}>${s.icon} ${s.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Chapter Title</label>
+        <input class="form-input" id="ch-title" placeholder="e.g. Variables & Data Types">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Order Number</label>
+        <input class="form-input" id="ch-order" type="number" placeholder="e.g. 1" min="1">
+      </div>
+    </div>`,
+    [{label:'Cancel',cls:'btn-outline',action:'closeModal()'},
+     {label:'Add Chapter',cls:'btn-green',action:'saveNewChapter()'}]
+  );
+}
+function saveNewChapter(){
+  const subjectId=document.getElementById('ch-subject').value;
+  const title=document.getElementById('ch-title').value.trim();
+  const order=parseInt(document.getElementById('ch-order').value)||99;
+  if(!title){showToast('⚠️ Chapter title required');return}
+  const chapters=ls(LS_CHAPTERS);
+  chapters.push({id:'ch_'+Date.now(),subjectId,title,order});
+  save(LS_CHAPTERS,chapters);
+  activeChapterSubject=subjectId;
+  closeModal();renderChapterPanel();showToast('✅ Chapter added!');
+}
+function openEditChapterModal(i){
+  const chapters=ls(LS_CHAPTERS);const c=chapters[i];const subs=getSubjects();
+  openModal('✏️ Edit Chapter',`
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Subject</label>
+        <select class="form-select" id="ch-subject">
+          ${subs.map(s=>`<option value="${s.id}"${s.id===c.subjectId?' selected':''}>${s.icon} ${s.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Chapter Title</label>
+        <input class="form-input" id="ch-title" value="${c.title||c.name||''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Order Number</label>
+        <input class="form-input" id="ch-order" type="number" value="${c.order||1}">
+      </div>
+    </div>`,
+    [{label:'Cancel',cls:'btn-outline',action:'closeModal()'},
+     {label:'Save Changes',cls:'btn-green',action:`saveEditChapter(${i})`}]
+  );
+}
+function saveEditChapter(i){
+  const chapters=ls(LS_CHAPTERS);
+  chapters[i].subjectId=document.getElementById('ch-subject').value;
+  chapters[i].title=document.getElementById('ch-title').value.trim()||chapters[i].title;
+  chapters[i].order=parseInt(document.getElementById('ch-order').value)||chapters[i].order;
+  save(LS_CHAPTERS,chapters);closeModal();renderChapterPanel();showToast('✅ Chapter updated!');
+}
+function confirmDeleteChapter(i){
+  const c=ls(LS_CHAPTERS)[i];
+  showConfirm('Delete Chapter?',`Delete "${c?.title||'this chapter'}"?`,()=>{
+    const chapters=ls(LS_CHAPTERS);chapters.splice(i,1);save(LS_CHAPTERS,chapters);renderChapterPanel();showToast('🗑 Chapter deleted');
+  });
+}
+
+// ============================================================
+// MATERIALS & LINKS
+// ============================================================
+let _matFilter='all';
+function filterMaterials(type,btn){
+  _matFilter=type;
+  document.querySelectorAll('.tabs-bar .tab-btn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  renderMaterials(type);
+}
+function renderMaterials(filter){
+  _matFilter=filter||_matFilter;
+  const mats=ls(LS_MATERIALS);
+  const vids=ls(LS_VIDEOS).map(v=>({...v,_src:'video',type:'video'}));
+  const exams=ls(LS_EXAMS).map(e=>({...e,_src:'exam',type:'exam'}));
+  let all=[...mats.map(m=>({...m,_src:'material'})),...vids,...exams];
+  if(_matFilter!=='all'){
+    if(_matFilter==='pdf')all=all.filter(m=>m.type==='pdf'||m.type==='note');
+    else all=all.filter(m=>m.type===_matFilter);
+  }
+  const el=document.getElementById('materialsList');
+  if(all.length===0){el.innerHTML='<div class="empty-state"><div class="icon">📄</div><p>No materials yet. Add links to PDFs, videos, or notes.</p></div>';return}
+  const subs=getSubjects();
+  const iconMap={pdf:'📄',video:'🎬',note:'📝',exam:'🧪'};
+  const bgMap={pdf:'rgba(229,57,53,.08)',video:'rgba(21,101,192,.08)',note:'rgba(46,125,50,.08)',exam:'rgba(249,168,37,.08)'};
+  el.innerHTML='<div class="item-list">'+all.map((m,i)=>{
+    const subjName=subs.find(s=>s.id===(m.subjectId||m.subject))?.name||m.subjectId||m.subject||'—';
+    const isPrem=m.isPremium||m.premium;
+    return`<div class="item-row">
+      <div class="item-icon" style="background:${bgMap[m.type]||'var(--surface2)'}">${iconMap[m.type]||'📄'}</div>
+      <div class="item-body">
+        <div class="item-title">${m.title||m.name||'Untitled'}</div>
+        <div class="item-meta" style="display:flex;gap:8px;align-items:center">
+          <span>${subjName}</span>
+          ${m.url?`<span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green-light);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.url}</span>`:''}
+          ${isPrem?'<span class="badge badge-gold">👑 PRO</span>':'<span class="badge badge-green">FREE</span>'}
+        </div>
+      </div>
+      <div class="item-actions">
+        <button class="btn btn-outline btn-xs" onclick="openEditMaterialModal(${i},'${m._src}')">✏️</button>
+        <button class="btn btn-red btn-xs" onclick="confirmDeleteMaterial(${i},'${m._src}')">✕</button>
+      </div>
+    </div>`;
+  }).join('')+'</div>';
+}
+
+function openAddMaterialModal(){
+  const subs=getSubjects();
+  const chapters=ls(LS_CHAPTERS);
+  openModal('➕ Add Material / Link',`
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-select" id="mat-type" onchange="updateMatTypeFields()">
+          <option value="pdf">📄 PDF</option>
+          <option value="video">🎬 Video</option>
+          <option value="note">📝 Note</option>
+          <option value="exam">🧪 Exam / Past Paper</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input class="form-input" id="mat-title" placeholder="e.g. Chapter 3 Exercise Sheet">
+      </div>
+      <div class="form-grid form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Subject</label>
+          <select class="form-select" id="mat-subject" onchange="updateMatChapters()">
+            <option value="">— Select Subject —</option>
+            ${subs.map(s=>`<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Chapter (optional)</label>
+          <select class="form-select" id="mat-chapter">
+            <option value="">— All Chapters —</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Link / URL</label>
+        <input class="form-input" id="mat-url" placeholder="https://drive.google.com/… or t.me/… or any link">
+        <div class="form-hint">Paste any direct link — Google Drive, Telegram, Dropbox, YouTube, etc.</div>
+      </div>
+      <div class="form-group" id="mat-content-group" style="display:none">
+        <label class="form-label">Inline Content (for notes — optional)</label>
+        <textarea class="form-textarea" id="mat-content" placeholder="Study note content shown directly in app…"></textarea>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px">
+        <label class="toggle"><input type="checkbox" id="mat-premium"><div class="toggle-slider"></div></label>
+        <span class="toggle-label">👑 Premium Only (Free users see lock)</span>
+      </div>
+    </div>`,
+    [{label:'Cancel',cls:'btn-outline',action:'closeModal()'},
+     {label:'Add Material',cls:'btn-green',action:'saveNewMaterial()'}]
+  );
+}
+function updateMatTypeFields(){
+  const type=document.getElementById('mat-type')?.value;
+  const cg=document.getElementById('mat-content-group');
+  if(cg)cg.style.display=type==='note'?'':'none';
+}
+function updateMatChapters(){
+  const subjId=document.getElementById('mat-subject')?.value;
+  const chSel=document.getElementById('mat-chapter');
+  if(!chSel)return;
+  const chapters=ls(LS_CHAPTERS).filter(c=>c.subjectId===subjId);
+  chSel.innerHTML='<option value="">— All Chapters —</option>'+chapters.map((c,i)=>`<option value="${c.title}">${c.order||i+1}. ${c.title}</option>`).join('');
+}
+function saveNewMaterial(){
+  const type=document.getElementById('mat-type').value;
+  const title=document.getElementById('mat-title').value.trim();
+  const subjectId=document.getElementById('mat-subject').value;
+  const chapter=document.getElementById('mat-chapter').value;
+  const url=document.getElementById('mat-url').value.trim();
+  const content=document.getElementById('mat-content')?.value.trim()||'';
+  const isPremium=document.getElementById('mat-premium').checked;
+  if(!title){showToast('⚠️ Title is required');return}
+  const item={id:'mat_'+Date.now(),subjectId,chapter,title,url,content,isPremium,type};
+  if(type==='video'){
+    const vids=ls(LS_VIDEOS);vids.push(item);save(LS_VIDEOS,vids);
+  }else if(type==='exam'){
+    const exams=ls(LS_EXAMS);exams.push(item);save(LS_EXAMS,exams);
+  }else{
+    const mats=ls(LS_MATERIALS);mats.push(item);save(LS_MATERIALS,mats);
+  }
+  closeModal();renderMaterials(_matFilter);showToast('✅ Material added!');
+}
+function openEditMaterialModal(displayIdx, src){
+  // Re-derive the actual item from the correct store
+  let store, storeKey;
+  if(src==='video'){storeKey=LS_VIDEOS;store=ls(LS_VIDEOS);}
+  else if(src==='exam'){storeKey=LS_EXAMS;store=ls(LS_EXAMS);}
+  else{storeKey=LS_MATERIALS;store=ls(LS_MATERIALS);}
+
+  // Find by reconstructing the display list
+  const mats=ls(LS_MATERIALS).map(m=>({...m,_src:'material',type:m.type||'pdf'}));
+  const vids=ls(LS_VIDEOS).map(v=>({...v,_src:'video',type:'video'}));
+  const exams=ls(LS_EXAMS).map(e=>({...e,_src:'exam',type:'exam'}));
+  let all=[...mats,...vids,...exams];
+  if(_matFilter!=='all'){
+    if(_matFilter==='pdf')all=all.filter(m=>m.type==='pdf'||m.type==='note');
+    else all=all.filter(m=>m.type===_matFilter);
+  }
+  const m=all[displayIdx];
+  if(!m)return;
+  // Find real index in actual store
+  const realIdx=store.findIndex(s=>(s.id&&s.id===m.id)||(s.title===m.title&&s.subjectId===m.subjectId));
+  const subs=getSubjects();
+  openModal('✏️ Edit Material',`
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input class="form-input" id="emat-title" value="${(m.title||m.name||'').replace(/"/g,'&quot;')}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Subject</label>
+        <select class="form-select" id="emat-subject">
+          <option value="">— Select Subject —</option>
+          ${subs.map(s=>`<option value="${s.id}"${s.id===(m.subjectId||m.subject)?' selected':''}>${s.icon} ${s.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Link / URL</label>
+        <input class="form-input" id="emat-url" value="${(m.url||m.link||'').replace(/"/g,'&quot;')}">
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px">
+        <label class="toggle"><input type="checkbox" id="emat-premium"${(m.isPremium||m.premium)?' checked':''}><div class="toggle-slider"></div></label>
+        <span class="toggle-label">👑 Premium Only</span>
+      </div>
+    </div>`,
+    [{label:'Cancel',cls:'btn-outline',action:'closeModal()'},
+     {label:'Save',cls:'btn-green',action:`saveEditMaterial('${storeKey}',${realIdx})`}]
+  );
+}
+function saveEditMaterial(storeKey,realIdx){
+  const store=ls(storeKey);
+  if(!store[realIdx])return;
+  store[realIdx].title=document.getElementById('emat-title').value.trim()||store[realIdx].title;
+  store[realIdx].subjectId=document.getElementById('emat-subject').value||store[realIdx].subjectId;
+  store[realIdx].url=document.getElementById('emat-url').value.trim();
+  store[realIdx].isPremium=document.getElementById('emat-premium').checked;
+  save(storeKey,store);closeModal();renderMaterials(_matFilter);showToast('✅ Material updated!');
+}
+function confirmDeleteMaterial(displayIdx,src){
+  const mats=ls(LS_MATERIALS).map(m=>({...m,_src:'material',type:m.type||'pdf'}));
+  const vids=ls(LS_VIDEOS).map(v=>({...v,_src:'video',type:'video'}));
+  const exams=ls(LS_EXAMS).map(e=>({...e,_src:'exam',type:'exam'}));
+  let all=[...mats,...vids,...exams];
+  if(_matFilter!=='all'){
+    if(_matFilter==='pdf')all=all.filter(m=>m.type==='pdf'||m.type==='note');
+    else all=all.filter(m=>m.type===_matFilter);
+  }
+  const m=all[displayIdx];
+  showConfirm('Delete Material?',`Delete "${m?.title||m?.name||'this item'}"?`,()=>{
+    let storeKey;
+    if(m._src==='video')storeKey=LS_VIDEOS;
+    else if(m._src==='exam')storeKey=LS_EXAMS;
+    else storeKey=LS_MATERIALS;
+    let store=ls(storeKey);
+    const ri=store.findIndex(s=>(s.id&&s.id===m.id)||(s.title===m.title&&s.subjectId===m.subjectId));
+    if(ri>-1)store.splice(ri,1);
+    save(storeKey,store);renderMaterials(_matFilter);showToast('🗑 Material deleted');
+  });
+}
+
+// ============================================================
+// NEWS
+// ============================================================
+function renderNews(){
+  const news=ls(LS_NEWS);
+  const el=document.getElementById('newsList');
+  if(news.length===0){el.innerHTML='<div class="empty-state"><div class="icon">📰</div><p>No announcements yet.</p></div>';return}
+  el.innerHTML='<div class="item-list">'+[...news].reverse().map((n,ri)=>{
+    const realIdx=news.length-1-ri;
+    return`<div class="item-row">
+      <div class="item-icon" style="background:rgba(249,168,37,.08);border:1px solid rgba(249,168,37,.2)">📢</div>
+      <div class="item-body">
+        <div class="item-title">${n.title}</div>
+        <div class="item-meta" style="display:flex;gap:8px;align-items:center">
+          <span class="badge badge-${tagBadge(n.tag||n.type)}">${n.tag||n.type||'General'}</span>
+          <span>${n.date||''}</span>
+          <span>${n.source||'Campus Update'}</span>
+        </div>
+      </div>
+      <div class="item-actions">
+        <button class="btn btn-outline btn-xs" onclick="openEditNewsModal(${realIdx})">✏️</button>
+        <button class="btn btn-red btn-xs" onclick="confirmDeleteNews(${realIdx})">✕</button>
+      </div>
+    </div>`;
+  }).join('')+'</div>';
+}
+function tagBadge(t){
+  const m={'urgent':'red','academic':'blue','event':'gold'};return m[(t||'').toLowerCase()]||'green';
+}
+function openAddNewsModal(){
+  openModal('📢 Post Announcement',`
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input class="form-input" id="news-title" placeholder="e.g. Final Exam Schedule Released">
+      </div>
+      <div class="form-grid form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Category Tag</label>
+          <select class="form-select" id="news-tag">
+            <option value="General">General</option>
+            <option value="Urgent">🚨 Urgent</option>
+            <option value="Academic">📚 Academic</option>
+            <option value="Event">🎉 Event</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Source</label>
+          <input class="form-input" id="news-source" placeholder="e.g. Academic Office">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Body / Content</label>
+        <textarea class="form-textarea" id="news-body" placeholder="Full announcement text…"></textarea>
+      </div>
+    </div>`,
+    [{label:'Cancel',cls:'btn-outline',action:'closeModal()'},
+     {label:'Post Now',cls:'btn-green',action:'saveNewNews()'}]
+  );
+}
+function saveNewNews(){
+  const title=document.getElementById('news-title').value.trim();
+  const tag=document.getElementById('news-tag').value;
+  const source=document.getElementById('news-source').value.trim()||'Campus Update';
+  const body=document.getElementById('news-body').value.trim();
+  if(!title){showToast('⚠️ Title required');return}
+  const news=ls(LS_NEWS);
+  const now=new Date();
+  const date=now.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+', '+now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  news.push({id:'news_'+Date.now(),title,tag,source,body,date});
+  save(LS_NEWS,news);closeModal();renderNews();showToast('📢 Announcement posted!');
+}
+function openEditNewsModal(i){
+  const news=ls(LS_NEWS);const n=news[i];
+  openModal('✏️ Edit Announcement',`
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input class="form-input" id="news-title" value="${(n.title||'').replace(/"/g,'&quot;')}">
+      </div>
+      <div class="form-grid form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-select" id="news-tag">
+            <option${(n.tag||n.type)==='General'?' selected':''}>General</option>
+            <option${(n.tag||n.type)==='Urgent'?' selected':''}>Urgent</option>
+            <option${(n.tag||n.type)==='Academic'?' selected':''}>Academic</option>
+            <option${(n.tag||n.type)==='Event'?' selected':''}>Event</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Source</label>
+          <input class="form-input" id="news-source" value="${(n.source||'').replace(/"/g,'&quot;')}">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Body / Content</label>
+        <textarea class="form-textarea" id="news-body">${n.body||n.content||''}</textarea>
+      </div>
+    </div>`,
+    [{label:'Cancel',cls:'btn-outline',action:'closeModal()'},
+     {label:'Save Changes',cls:'btn-green',action:`saveEditNews(${i})`}]
+  );
+}
+function saveEditNews(i){
+  const news=ls(LS_NEWS);
+  news[i].title=document.getElementById('news-title').value.trim()||news[i].title;
+  news[i].tag=document.getElementById('news-tag').value;
+  news[i].source=document.getElementById('news-source').value.trim();
+  news[i].body=document.getElementById('news-body').value.trim();
+  save(LS_NEWS,news);closeModal();renderNews();showToast('✅ Announcement updated!');
+}
+function confirmDeleteNews(i){
+  const n=ls(LS_NEWS)[i];
+  showConfirm('Delete Announcement?',`Delete "${n?.title||'this post'}"?`,()=>{
+    const news=ls(LS_NEWS);news.splice(i,1);save(LS_NEWS,news);renderNews();showToast('🗑 Post deleted');
+  });
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function loadSettings(){
+  const s=ls(LS_SETTINGS,{});
+  document.getElementById('set-campusName').value=s.campusName||'';
+  document.getElementById('set-motivation').value=s.motivation||'';
+  document.getElementById('set-campusBanner').value=s.campusBanner||'';
+  document.getElementById('set-price').value=s.price||'89';
+  document.getElementById('set-discountLabel').value=s.discountLabel||'';
+  document.getElementById('set-cbeAccount').value=s.cbeAccount||'1000406065719';
+  document.getElementById('set-cbeHolder').value=s.cbeHolder||'Giduma Hinsermu';
+}
+function saveSettings(){
+  const s={
+    campusName:document.getElementById('set-campusName').value.trim(),
+    motivation:document.getElementById('set-motivation').value.trim(),
+    campusBanner:document.getElementById('set-campusBanner').value.trim(),
+    price:document.getElementById('set-price').value.trim(),
+    discountLabel:document.getElementById('set-discountLabel').value.trim(),
+    cbeAccount:document.getElementById('set-cbeAccount').value.trim(),
+    cbeHolder:document.getElementById('set-cbeHolder').value.trim(),
+  };
+  save(LS_SETTINGS,s);
+  const ok=document.getElementById('settings-success');
+  ok.style.display='flex';setTimeout(()=>ok.style.display='none',3000);
+  showToast('✅ Settings saved and live!');
+}
+
+// ============================================================
+// TELEGRAM
+// ============================================================
+function loadTelegram(){
+  const t=ls(LS_TELEGRAM,{});
+  document.getElementById('tg-supportName').value=t.supportName||'';
+  document.getElementById('tg-supportLink').value=t.supportLink||'';
+  document.getElementById('tg-newsName').value=t.newsName||'';
+  document.getElementById('tg-newsLink').value=t.newsLink||'';
+  updateTgPreviews();
+}
+function saveTelegram(){
+  const t={
+    supportName:document.getElementById('tg-supportName').value.trim(),
+    supportLink:document.getElementById('tg-supportLink').value.trim(),
+    newsName:document.getElementById('tg-newsName').value.trim(),
+    newsLink:document.getElementById('tg-newsLink').value.trim(),
+  };
+  save(LS_TELEGRAM,t);
+  document.getElementById('tg-success').style.display='flex';
+  setTimeout(()=>document.getElementById('tg-success').style.display='none',3000);
+  showToast('✅ Telegram links updated!');updateTgPreviews();
+}
+function updateTgPreviews(){
+  const sp=document.getElementById('tg-support-preview');
+  const np=document.getElementById('tg-news-preview');
+  const sl=document.getElementById('tg-supportLink')?.value.trim();
+  const nl=document.getElementById('tg-newsLink')?.value.trim();
+  if(sp){sp.style.display=sl?'block':'none';sp.textContent='→ '+sl;}
+  if(np){np.style.display=nl?'block':'none';np.textContent='→ '+nl;}
+}
+document.addEventListener('input',e=>{if(['tg-supportLink','tg-newsLink'].includes(e.target.id))updateTgPreviews()});
+
+// ============================================================
+// MODAL SYSTEM
+// ============================================================
+function openModal(title,bodyHtml,actions=[]){
+  document.getElementById('modal-title-text').textContent=title;
+  document.getElementById('modal-body').innerHTML=bodyHtml;
+  document.getElementById('modal-actions').innerHTML=actions.map(a=>
+    `<button class="btn ${a.cls}" onclick="${a.action}">${a.label}</button>`
+  ).join('');
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open')}
+document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('modal-overlay'))closeModal()});
+
+// ============================================================
+// CONFIRM DIALOG
+// ============================================================
+let _confirmCb=null;
+function showConfirm(title,msg,cb){
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-msg').textContent=msg;
+  _confirmCb=cb;
+  document.getElementById('confirm-ok-btn').onclick=()=>{_confirmCb&&_confirmCb();closeConfirm()};
+  document.getElementById('confirm-overlay').style.display='flex';
+}
+function closeConfirm(){document.getElementById('confirm-overlay').style.display='none';_confirmCb=null}
+
+// ============================================================
+// TOAST
+// ============================================================
+let _toastTimer;
+function showToast(msg){
+  let t=document.getElementById('admin-toast');
+  if(!t){t=document.createElement('div');t.id='admin-toast';Object.assign(t.style,{position:'fixed',bottom:'28px',left:'50%',transform:'translateX(-50%)',background:'var(--surface3)',color:'var(--text)',border:'1px solid var(--border)',borderRadius:'100px',padding:'10px 22px',fontSize:'13px',fontWeight:'500',zIndex:'9999',transition:'all .3s',whiteSpace:'nowrap',opacity:'0'});document.body.appendChild(t)}
+  t.textContent=msg;t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';
+  clearTimeout(_toastTimer);_toastTimer=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(8px)'},2500);
+}
+
+// ============================================================
+// REFRESH
+// ============================================================
+function refreshAll(){renderPanel(document.querySelector('.sb-item.active')?.id?.replace('nav-',''));showToast('↻ Refreshed')}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded',()=>{
+  renderDashboard();
+  // Auto-refresh pending count every 5 seconds
+  setInterval(()=>{
+    const pending=ls(LS_USERS).filter(u=>u.pending&&!u.premium).length;
+    const pb=document.getElementById('pendingBadge');
+    if(pending>0){pb.style.display='';pb.textContent=pending}else pb.style.display='none';
+    document.getElementById('stat-pending').textContent=pending;
+  },5000);
+});
+</script>
+</body>
+</html>
